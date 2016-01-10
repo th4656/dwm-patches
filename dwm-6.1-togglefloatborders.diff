@@ -1,0 +1,54 @@
+--- dwm.c.orig	2016-01-09 16:30:47.628397448 -0800
++++ dwm.c	2016-01-09 16:33:11.793470863 -0800
+@@ -94,7 +94,7 @@ struct Client {
+ 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+ 	int bw, oldbw;
+ 	unsigned int tags;
+-	int ismax, wasfloating, isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen, iscentered;
++	int ismax, wasfloating, isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen, iscentered, hasfloatborders;
+ 	Client *next;
+ 	Client *snext;
+ 	Monitor *mon;
+@@ -218,6 +218,7 @@ static void tagmon(const Arg *arg);
+ static void tile(Monitor *);
+ static void togglebar(const Arg *arg);
+ static void togglefloating(const Arg *arg);
++static void togglefloatborders(const Arg *arg);
+ static void toggletag(const Arg *arg);
+ static void toggleview(const Arg *arg);
+ static void unfocus(Client *c, int setfocus);
+@@ -1876,13 +1877,33 @@ togglefloating(const Arg *arg)
+ 	if (selmon->sel->isfullscreen) /* no support for fullscreen windows */
+ 		return;
+ 	selmon->sel->isfloating = !selmon->sel->isfloating || selmon->sel->isfixed;
+-	if (selmon->sel->isfloating)
++	if (selmon->sel->isfloating) {
++		selmon->sel->hasfloatborders = 1;
+ 		resize(selmon->sel, selmon->sel->x, selmon->sel->y,
+ 		       selmon->sel->w, selmon->sel->h, 0);
++	}
+ 	arrange(selmon);
+ }
+ 
+ void
++togglefloatborders(const Arg *arg)
++{
++	Client *c = selmon->sel;
++
++	if (!c || !c->isfloating)
++		return;
++	c->hasfloatborders = !c->hasfloatborders;
++	if(c->hasfloatborders) {
++		c->oldbw = c->bw;
++		c->bw = borderpx;
++	} else {
++		c->oldbw = c->bw;
++		c->bw = 0;
++	}
++	resizeclient(c, c->x, c->y, c->w, c->h);
++}
++
++void
+ toggletag(const Arg *arg)
+ {
+ 	unsigned int newtags;
